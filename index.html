@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<title>Lab 3 | Web Chat</title>
+		<style>
+			* { margin: 0; padding: 0; box-sizing: border-box; }
+			body { font: 13px Helvetica, Arial; }
+			h1{ text-align: center; padding: 20px;}
+			header{ position: relative;}
+			#roll{ position: fixed;bottom:0; right: 0; background: pink; border: 2px solid black;}
+			form { background: #000; padding: 3px; width: 100%; }
+			form input { border: 0; padding: 10px; width: 66%; margin-right: .5%; }
+			form button { padding: 10px 15px; }
+			#btn_send{ background: #00ff00;width:16%;}
+			#btn_quit{ background: red;}
+			#login{ background:#c0c0c0; padding: 10px 20px;}
+			#messages, #users { list-style-type: none; margin: 0; padding: 0; }
+			#messages li, #users li{ padding: 5px 10px; }
+			#messages li:nth-child(odd) { background: #eee; }
+			.clear{ clear:both;}
+		</style>
+	</head>
+	<body>
+	<div id="container">
+		<header>
+			<h1>Humber Web Chat</h1>
+			<div id="roll"><h2>Chat Users</h2><ul id="users"></ul><br class="clear"/></div>
+		</header>
+
+	<!-- CHAT GUI -->
+		<main>
+			<section id="login">
+				<div>
+					<span>Welcome! Please provide your chat name...</span>
+					<input type="text" id="login_txt" autocomplete="off"/>
+					<button id="btn_login">Sign in</button>
+				</div> 
+			</section>
+			
+			<form action="">
+				<input type="text" id="txt_msg" autocomplete="off" />
+				<input type="submit" id="btn_send" value="Send" />
+				<button id="btn_quit">Leave Chat</button>
+			</form>
+			<ul id="messages"></ul>
+		</main>
+
+	</div> <!--END container-->
+
+	<!--INCLUDE LIBRARIES -->
+		<script src="/socket.io/socket.io.js"></script>
+		<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+	<script>
+
+	//==== EVENT LISTENERS ====
+
+	$(function (){
+		var socket = io.connect();
+		var userName = "";
+
+		$("#btn_login").click(function(e){
+					e.preventDefault();
+					userName = $('#login_txt').val();       
+					socket.emit('chat users', userName);
+					$('#user').val('');
+				
+				});
+				
+		$('#btn_send').click(function(e){
+			e.preventDefault();
+			let toSend = {};
+			toSend.uid = userName;
+			toSend.msg =  $('#txt_msg').val();
+			socket.emit('chat message', toSend.uid + ' says: ' + toSend.msg);
+			$('#txt_msg').val(''); 
+			
+		});
+
+		$('#btn_quit').click(function(e){
+					e.preventDefault();
+				let userLeft = userName + ' has left the chat';
+				$('#txt_msg').val('You have left the chat!');
+				socket.emit('hasLeft', userLeft);
+				socket.disconnect();
+				});
+				
+				
+	//SOCKET LISTENERS
+
+				socket.on('chat users', function(user){
+					$('#users').append($('<li>').text(user));
+				});
+
+				socket.on('chat message', function(msg){
+					$('#messages').append($('<li>').text(msg));
+				});
+
+				socket.on('hasLeft', function(userLeft){
+					$('#users').append($('<li>').text(userLeft)); 
+				});
+
+	});
+
+
+	</script>
+	</body>
+</html>
